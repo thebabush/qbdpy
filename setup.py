@@ -12,5 +12,6 @@ setup(
     cffi_modules=[
         './qbdpy/build_all.py:ffi',
     ],
+    scripts=['scripts/qbdpy'],
 )
 

@@ -3,3 +3,5 @@
 *.so
 patched/
 *.egg-info/
+__pycache__/
+build/

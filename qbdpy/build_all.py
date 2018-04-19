@@ -160,8 +160,6 @@ class Builder(object):
     def build_ffi(self, main_h):
         ffi = cffi.FFI()
 
-        print(main_h)
-        print(open(main_h).read())
         ffi.cdef(open(main_h).read())
 
         ffi.set_source('qbdpy._qbdi', '''
@@ -169,7 +167,7 @@ class Builder(object):
 
         // QBDIPRELOAD_INIT; // Gets automatically expanded by the preprocessor.
                              // TODO: Do everything properly and put the macro inside cdef()
-        ''', libraries=['QBDIPreload', 'QBDI', 'python3.5m'], include_dirs=[self.cffi_inc_dir])
+        ''', libraries=['QBDIPreload', 'QBDI'], include_dirs=[self.cffi_inc_dir])
 
         ffi.embedding_api('''
         int qbdipreload_on_start(void *main);
@@ -180,32 +178,88 @@ class Builder(object):
         ''')
 
         ffi.embedding_init_code('''
+        # Take care of virtual enviroment
+        import os
+        venv = os.getenv('VIRTUAL_ENV', None)
+        if venv:
+            activate = os.path.join(venv, 'bin/activate_this.py')
+            exec(open(activate).read(), dict(__file__=activate))
+
+        import qbdpy
         from qbdpy._qbdi import ffi, lib
+
+
+        class Wrapper(object):
+            def __init__(self, obj):
+                self.obj = obj
+
+            def __dir__(self):
+                return self.obj.__dir__() + ['obj']
+
+            def __getattr__(self, name):
+                value = getattr(self.obj, name)
+                t = type(value)
+                if t == int:
+                    return value
+                elif t == ffi.CData:
+                    t = ffi.typeof(value)
+                    if t == ffi.typeof('char *'):
+                        return ffi.string(value).decode('utf-8')
+                return value
+
+
+        import os
+        import sys
+        script = os.getenv('QBDPY_SCRIPT', None)
+        if script:
+            script_dir, script_path = os.path.split(script)
+            if not script_dir:
+                script_dir = '.'
+            sys.path.append(script_dir)
+            __import__(script_path[:script_path.rfind('.')])
+
+
+        from qbdpy import preload
 
 
         @ffi.def_extern()
         def qbdipreload_on_start(main):
-            return lib.QBDIPRELOAD_NOT_HANDLED
+            if preload._on_start:
+                return preload._on_start(main)
+            else:
+                return lib.QBDIPRELOAD_NOT_HANDLED
 
 
         @ffi.def_extern()
         def qbdipreload_on_premain(gprCtx, fpuCtx):
-            return lib.QBDIPRELOAD_NOT_HANDLED
+            if preload._on_premain:
+                return preload._on_premain(gprCtx, fpuCtx)
+            else:
+                return lib.QBDIPRELOAD_NOT_HANDLED
 
 
         @ffi.def_extern()
         def qbdipreload_on_main(argc, argv):
-            return lib.QBDIPRELOAD_NOT_HANDLED
+            if preload._on_main:
+                return preload._on_main(argc, argc)
+            else:
+                return lib.QBDIPRELOAD_NOT_HANDLED
 
 
         @ffi.def_extern()
         def qbdipreload_on_run(vm, start, stop):
-            return lib.QBDIPRELOAD_NOT_HANDLED
+            if preload._on_run:
+                return preload._on_run(vm, start, stop)
+            else:
+                return lib.QBDIPRELOAD_NOT_HANDLED
 
 
         @ffi.def_extern()
         def qbdipreload_on_exit(status):
-            return lib.QBDIPRELOAD_NOT_HANDLED
+            if preload._on_exit:
+                return preload._on_exit(status)
+            else:
+                return lib.QBDIPRELOAD_NOT_HANDLED
         ''')
 
         ffi.compile(verbose=1)
