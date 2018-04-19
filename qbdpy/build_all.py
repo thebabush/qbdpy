@@ -311,10 +311,6 @@ class Builder(object):
         open(path, 'w').write(code)
 
 
-def prepare_all():
-    pass
-
-
 def build_all():
     build_dir = os.path.join(tempfile.gettempdir(), 'qbdpy_tmp')
     shutil.rmtree(build_dir, ignore_errors=True)
