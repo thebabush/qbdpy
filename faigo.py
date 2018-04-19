@@ -4,11 +4,7 @@ import re
 import subprocess
 import os
 import shutil
-import functools
 
-import pycparser.c_generator
-
-from IPython import embed as fuck
 import glob
 
 
