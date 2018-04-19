@@ -164,13 +164,6 @@ class Builder(object):
         print(open(main_h).read())
         ffi.cdef(open(main_h).read())
 
-        print('qbdpy._qbdi', '''
-        #include "{}"
-
-        // QBDIPRELOAD_INIT; // Gets automatically expanded by the preprocessor.
-                             // TODO: Do everything properly and put the macro inside cdef()
-        '''.format(main_h))
-
         ffi.set_source('qbdpy._qbdi', '''
         #include <QBDIPreload.h>
 
@@ -187,7 +180,7 @@ class Builder(object):
         ''')
 
         ffi.embedding_init_code('''
-        from ._qbdi import ffi, lib
+        from qbdpy._qbdi import ffi, lib
 
 
         @ffi.def_extern()
@@ -242,11 +235,10 @@ class Builder(object):
     def preprocess_header(self, path):
         p = subprocess.Popen(
             [
-                'clang-6.0',
+                'gcc',
                 '-E',
                 '-P',
                 '-nostdinc',
-                '-nobuiltininc',
                 path,
                 '-I{}'.format(self.cffi_patched_dir),
             ],
