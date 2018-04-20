@@ -10,7 +10,7 @@ import sys
 
 def find_lib():
     root = os.path.dirname(qbdpy.__file__)
-    m = re.compile(r'_qbdi\..*\.so')
+    m = re.compile(r'_qbdi.*\.so')
     for fn in os.listdir(root):
         if m.match(fn):
             return os.path.join(root, fn)
