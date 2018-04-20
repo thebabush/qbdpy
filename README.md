@@ -7,8 +7,7 @@ Experimental cffi-based [QBDI](https://qbdi.quarkslab.com/) bindings.
 ```python
 git clone git@github.com:kenoph/qbdpy.git
 cd qbdpy
-python setup.py build
-python setup.py install
+pip install .
 ```
 
 ## Example
@@ -16,4 +15,10 @@ python setup.py install
 ```sh
 qbdpy ./example.py /bin/ls
 ```
+
+## Why?
+
+Because python 3 and automatic.
+
+Also, because I never used cffi before and wanted to try it out.
 
