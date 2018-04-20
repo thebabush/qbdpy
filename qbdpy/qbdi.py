@@ -1,4 +1,4 @@
-from qbdpy._qbdi import ffi, lib
+from qbdpy import ffi, lib
 
 
 # Magic tricks that might get removed in the future

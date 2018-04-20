@@ -1,4 +1,4 @@
-from qbdpy._qbdi import ffi
+from qbdpy import ffi
 
 
 class Wrapper(object):
