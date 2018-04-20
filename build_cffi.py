@@ -182,34 +182,8 @@ class Builder(object):
         ''')
 
         ffi.embedding_init_code('''
-        # Take care of virtual enviroment
-        import os
-        venv = os.getenv('VIRTUAL_ENV', None)
-        if venv:
-            activate = os.path.join(venv, 'bin/activate_this.py')
-            exec(open(activate).read(), dict(__file__=activate))
-
         from qbdpy import preload
         from qbdpy._qbdi import ffi, lib
-
-
-        class Wrapper(object):
-            def __init__(self, obj):
-                self.obj = obj
-
-            def __dir__(self):
-                return self.obj.__dir__() + ['obj']
-
-            def __getattr__(self, name):
-                value = getattr(self.obj, name)
-                t = type(value)
-                if t == int:
-                    return value
-                elif t == ffi.CData:
-                    t = ffi.typeof(value)
-                    if t == ffi.typeof('char *'):
-                        return ffi.string(value).decode('utf-8')
-                return value
 
 
         import os
