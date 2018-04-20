@@ -13,7 +13,7 @@ pip install .
 ## Example
 
 ```sh
-qbdpy ./example.py /bin/ls
+qbdpy ./examples/tracer.py /bin/ls
 ```
 
 ## Why?
