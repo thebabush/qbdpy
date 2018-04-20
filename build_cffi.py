@@ -160,6 +160,7 @@ class Builder(object):
     def build_ffi(self, main_h):
         ffi = cffi.FFI()
 
+        # This is passed to a real compiler
         ffi.set_source('qbdpy._qbdi', '''
         #include <QBDIPreload.h>
         ''', libraries=['QBDIPreload', 'QBDI'], include_dirs=[self.cffi_inc_dir])
@@ -171,75 +172,14 @@ class Builder(object):
             # include_dirs=[self.cffi_inc_dir, self.cffi_inc_dir + '/QBDI/']
         # )
 
+        # Declaration shared between python and C
         ffi.cdef(open(main_h).read())
 
-        ffi.embedding_api('''
-        int qbdipreload_on_start(void *main);
-        int qbdipreload_on_premain(void *gprCtx, void *fpuCtx);
-        int qbdipreload_on_main(int argc, char** argv);
-        int qbdipreload_on_run(VMInstanceRef vm, rword start, rword stop);
-        int qbdipreload_on_exit(int status);
-        ''')
+        # External interface of the .so
+        ffi.embedding_api(open('./cffi/embedding.h').read())
 
-        ffi.embedding_init_code('''
-        from qbdpy import preload
-        from qbdpy._qbdi import ffi, lib
-
-
-        import os
-        import sys
-        script = os.getenv('QBDPY_SCRIPT', None)
-        if script:
-            # Init QBDPYPreload
-            lib.qbdipreload_hook_init();
-
-            # Import the user script
-            script_dir, script_path = os.path.split(script)
-            if not script_dir:
-                script_dir = '.'
-            sys.path.append(script_dir)
-            __import__(script_path[:script_path.rfind('.')])
-
-
-        @ffi.def_extern()
-        def qbdipreload_on_start(main):
-            if preload._on_start:
-                return preload._on_start(main)
-            else:
-                return lib.QBDIPRELOAD_NOT_HANDLED
-
-
-        @ffi.def_extern()
-        def qbdipreload_on_premain(gprCtx, fpuCtx):
-            if preload._on_premain:
-                return preload._on_premain(gprCtx, fpuCtx)
-            else:
-                return lib.QBDIPRELOAD_NOT_HANDLED
-
-
-        @ffi.def_extern()
-        def qbdipreload_on_main(argc, argv):
-            if preload._on_main:
-                return preload._on_main(argc, argc)
-            else:
-                return lib.QBDIPRELOAD_NOT_HANDLED
-
-
-        @ffi.def_extern()
-        def qbdipreload_on_run(vm, start, stop):
-            if preload._on_run:
-                return preload._on_run(vm, start, stop)
-            else:
-                return lib.QBDIPRELOAD_NOT_HANDLED
-
-
-        @ffi.def_extern()
-        def qbdipreload_on_exit(status):
-            if preload._on_exit:
-                return preload._on_exit(status)
-            else:
-                return lib.QBDIPRELOAD_NOT_HANDLED
-        ''')
+        # Python code called at .so load
+        ffi.embedding_init_code(open('./cffi/init.py').read())
 
         return ffi
 
