@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import qbdpy
-import IPython
 import os
 import re
 import subprocess
 import sys
+
+import qbdpy
 
 
 def find_lib():
@@ -19,6 +19,10 @@ def find_lib():
 
 
 def main(script, params):
+    if not os.path.isfile(script):
+        print('qbdpy: Couldn\'t find script "{}"'.format(script))
+        exit(1)
+
     so_path = find_lib()
 
     env = os.environ.copy()
