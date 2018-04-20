@@ -8,39 +8,37 @@ for _name, _value in lib.__dict__.items():
         _globals[_name[12:]] = _value
 
 
-_on_start = None
-_on_premain = None
-_on_main = None
-_on_run = None
-_on_exit = None
-
-
 def on_start(f):
-    global _on_start
-    _on_start = f
+    @ffi.def_extern()
+    def qbdipreload_on_start(*args):
+        return f(*args)
     return f
 
 
 def on_premain(f):
-    global _on_premain
-    _on_premain = f
+    @ffi.def_extern()
+    def qbdipreload_on_premain(*args):
+        return f(*args)
     return f
 
 
 def on_main(f):
-    global _on_main
-    _on_main = f
+    @ffi.def_extern()
+    def qbdipreload_on_main(*args):
+        return f(*args)
     return f
 
 
 def on_run(f):
-    global _on_run
-    _on_run = f
+    @ffi.def_extern()
+    def qbdipreload_on_run(*args):
+        return f(*args)
     return f
 
 
 def on_exit(f):
-    global _on_exit
-    _on_exit = f
+    @ffi.def_extern()
+    def qbdipreload_on_exit(*args):
+        return f(*args)
     return f
 
