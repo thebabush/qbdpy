@@ -3,17 +3,27 @@
 import qbdpy
 import IPython
 import os
+import re
 import subprocess
 import sys
 
 
+def find_lib():
+    root = os.path.dirname(qbdpy.__file__)
+    m = re.compile(r'_qbdi\..*\.so')
+    for fn in os.listdir(root):
+        if m.match(fn):
+            return os.path.join(root, fn)
+    else:
+        raise Exception('qbdpy: Couldn\'t find native library')
+
+
 def main(script, params):
-    path = list(p for p in qbdpy.__path__)[0]
-    path = os.path.join(path, 'qbdpy._qbdi.so')
+    so_path = find_lib()
 
     env = os.environ.copy()
     env.update({
-        'LD_PRELOAD': path,
+        'LD_PRELOAD': so_path,
         'QBDPY_SCRIPT': script,
     })
 

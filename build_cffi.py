@@ -160,14 +160,18 @@ class Builder(object):
     def build_ffi(self, main_h):
         ffi = cffi.FFI()
 
-        ffi.cdef(open(main_h).read())
-
         ffi.set_source('qbdpy._qbdi', '''
         #include <QBDIPreload.h>
-
-        // QBDIPRELOAD_INIT; // Gets automatically expanded by the preprocessor.
-                             // TODO: Do everything properly and put the macro inside cdef()
         ''', libraries=['QBDIPreload', 'QBDI'], include_dirs=[self.cffi_inc_dir])
+
+        # ffi.set_source(
+            # 'qbdpy._qbdi',
+            # open('~/src/QBDI/tools/QBDIPreload/src/linux_preload.c').read(),
+            # libraries=['QBDI'],
+            # include_dirs=[self.cffi_inc_dir, self.cffi_inc_dir + '/QBDI/']
+        # )
+
+        ffi.cdef(open(main_h).read())
 
         ffi.embedding_api('''
         int qbdipreload_on_start(void *main);
@@ -185,7 +189,7 @@ class Builder(object):
             activate = os.path.join(venv, 'bin/activate_this.py')
             exec(open(activate).read(), dict(__file__=activate))
 
-        import qbdpy
+        from qbdpy import preload
         from qbdpy._qbdi import ffi, lib
 
 
@@ -212,14 +216,15 @@ class Builder(object):
         import sys
         script = os.getenv('QBDPY_SCRIPT', None)
         if script:
+            # Init QBDPYPreload
+            lib.qbdipreload_hook_init();
+
+            # Import the user script
             script_dir, script_path = os.path.split(script)
             if not script_dir:
                 script_dir = '.'
             sys.path.append(script_dir)
             __import__(script_path[:script_path.rfind('.')])
-
-
-        from qbdpy import preload
 
 
         @ffi.def_extern()
@@ -262,7 +267,6 @@ class Builder(object):
                 return lib.QBDIPRELOAD_NOT_HANDLED
         ''')
 
-        ffi.compile(verbose=1)
         return ffi
 
     def fix_headers(self, paths):
@@ -320,6 +324,7 @@ def build_all():
     return builder.build_all()
 
 
-if __name__ == '__cffi__':
-    ffi = build_all()
+ffi = build_all()
+if __name__ == '__main__':
+    ffi.compile()
 

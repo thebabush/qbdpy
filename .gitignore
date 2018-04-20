@@ -5,3 +5,5 @@ patched/
 *.egg-info/
 __pycache__/
 build/
+clean.sh
+dist/
