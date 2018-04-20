@@ -27,7 +27,7 @@ Also, because I never used cffi before and wanted to try it out.
 ## Credits
 
 Shout-out to the folks at [Quarkslab](https://www.quarkslab.com/) for creating
-[QBDI](https://qbdi.quarkslab.com/)
+[QBDI](https://qbdi.quarkslab.com/).
 
 ### Complaints
 
