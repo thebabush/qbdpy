@@ -161,10 +161,14 @@ class Builder(object):
         ffi = cffi.FFI()
 
         # This is passed to a real compiler
-        ffi.set_source('qbdpy._qbdi', '''
-        #include <QBDIPreload.h>
-        ''', libraries=['QBDIPreload', 'QBDI'], include_dirs=[self.cffi_inc_dir])
+        ffi.set_source(
+            'qbdpy._qbdi',
+            open('./cffi/source.c').read(),
+            libraries=['QBDIPreload', 'QBDI'],
+            include_dirs=[self.cffi_inc_dir]
+        )
 
+        # Alternative:
         # ffi.set_source(
             # 'qbdpy._qbdi',
             # open('~/src/QBDI/tools/QBDIPreload/src/linux_preload.c').read(),
