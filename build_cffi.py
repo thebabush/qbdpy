@@ -10,13 +10,6 @@ import tempfile
 import cffi
 
 
-# TODO: Right now we simplify ignore these, but we should handle it properly
-VARADIC_FUNCTIONS = {
-    'qbdi_call',
-    'qbdi_simulateCall',
-}
-
-
 _name_counter = -1
 def mk_unique_name(line):
     global _name_counter
@@ -87,15 +80,14 @@ def patch_string(code, patcher):
     return '\n'.join([patcher(l) for l in code.splitlines()])
 
 
+_varadic_matcher = re.compile(r'.*qbdi_\S+?[AV]\(.*')
 def patch_problematic(line):
     if '__compile_check' in line:
         return ''
     elif line.startswith('extern int qbdipreload_on_'):
         return ''
-    
-    for vf in VARADIC_FUNCTIONS:
-        if vf in line:
-            return ''
+    elif _varadic_matcher.match(line):
+        return ''
 
     return line
 
