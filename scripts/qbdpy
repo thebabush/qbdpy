@@ -5,10 +5,9 @@ import re
 import subprocess
 import sys
 
-import qbdpy
-
 
 def find_lib():
+    import qbdpy
     root = os.path.dirname(qbdpy.__file__)
     m = re.compile(r'_qbdi.*\.so')
     for fn in os.listdir(root):
