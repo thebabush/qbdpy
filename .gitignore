@@ -7,3 +7,4 @@ build/
 clean.sh
 dist/
 *.pyc
+interactive.py
