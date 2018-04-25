@@ -24,6 +24,16 @@ class Wrapper(object):
         return value
 
 
+def decode_float(buff):
+    return ffi.cast('double *', buff)[0]
+
+
+def encode_float(f):
+    dp = ffi.new('double *')
+    dp[0] = f
+    return ffi.cast('char[16]', dp)
+
+
 def string(char_p):
     return ffi.string(char_p).decode('utf-8')
 

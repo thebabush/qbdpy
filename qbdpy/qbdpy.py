@@ -5,6 +5,7 @@ class VM(object):
     def __init__(self, cpu=None, mattrs=None, ref=None):
         # Keep references to calbacks so that FFI doesn't remove them
         self._cbs = []
+        self._datas = []
 
         if ref:
             self._ref = ref
@@ -25,6 +26,9 @@ class VM(object):
 
     def update_ref(self, ref):
         self._ref = ref
+
+    def new_stack(self):
+        return ffi.new('uint8_t **')
 
     # STATE MANAGEMENT
 
@@ -90,6 +94,9 @@ class VM(object):
     def add_code_cb(self, pos, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addCodeCB(self._ref, pos, _code_cb, data)
@@ -97,6 +104,9 @@ class VM(object):
     def add_code_addr_cb(self, addr, pos, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addCodeAddrCB(self._ref, addr, pos, _code_cb, data)
@@ -104,6 +114,9 @@ class VM(object):
     def add_code_range_cb(self, start, end, pos, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addCodeRangeCB(self._ref, start, end, pos, _code_cb, data)
@@ -111,6 +124,9 @@ class VM(object):
     def add_mnemonic_cb(self, mnemonic, pos, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         if type(mnemonic) == str:
             mnemonic = mnemonic.encode('utf-8')
         _code_cb = inst_callback(cb)
@@ -122,6 +138,9 @@ class VM(object):
     def add_mem_access_cb(self, access_type, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addMemAccessCB(self._ref, access_type, _code_cb, data)
@@ -129,12 +148,19 @@ class VM(object):
     def add_mem_addr_cb(self, addr, access_type, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addMemAddrCB(self._ref, addr, access_type, _code_cb, data)
+
     def add_mem_range_cb(self, start, end, access_type, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = inst_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addMemRangeCB(self._ref, start, end, access_type, _code_cb, data)
@@ -144,6 +170,9 @@ class VM(object):
     def add_vm_event_cb(self, event_mask, cb, data=None):
         if not data:
             data = ffi.NULL
+        else:
+            data = ffi.new_handle(data)
+            self._datas.append(data)
         _code_cb = vm_callback(cb)
         self._cbs.append(_code_cb)
         return lib.qbdi_addVMEventCB(self._ref, event_mask, _code_cb, data)
@@ -152,6 +181,18 @@ class VM(object):
 
     def get_inst_analysis(self, analysis_type):
         return lib.qbdi_getInstAnalysis(self._ref, analysis_type)
+
+    def record_memory_access(self, access_type):
+        return lib.qbdi_recordMemoryAccess(self._ref, access_type)
+
+    def delete_instrumentation(self, cb_id):
+        return lib.qbdi_deleteInstrumentation(self._ref, cb_id)
+
+    def get_bb_memory_access(self):
+        size_t_p = ffi.new('size_t *')
+        ma = lib.qbdi_getBBMemoryAccess(self._ref, size_t_p)
+        for i in range(size_t_p[0]):
+            yield ma[i]
 
 
 def aligned_alloc(size, align):
@@ -170,9 +211,17 @@ def get_module_names():
 
 
 def inst_callback(f):
-    return ffi.callback('VMAction(VMInstanceRef, GPRState *, FPRState *, void *)')(f)
+    @ffi.callback('VMAction(VMInstanceRef, GPRState *, FPRState *, void *)')
+    def g(a, b, c, data):
+        data = ffi.from_handle(data) if data else None
+        return f(a, b, c, data)
+    return g
 
 
 def vm_callback(f):
-    return ffi.callback('VMAction(VMInstanceRef, VMState *, GPRState *, FPRState *, void *)')(f)
+    @ffi.callback('VMAction(VMInstanceRef, VMState *, GPRState *, FPRState *, void *)')
+    def g(a, b, c, d, data):
+        data = ffi.from_handle(data) if data else None
+        return f(a, b, c, d, data)
+    return g
 
